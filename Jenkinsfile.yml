@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
-        stage('Setup') {
+        stage('hello') {
             steps {
                 // Environment preparation
             }
