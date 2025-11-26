@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Setup') {
+            steps {
+                // Environment preparation
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Test execution
+            }
+        }
+
+        stage('Report') {
+            steps {
+                // Results publishing
+            }
+        }
+    }
+
+    post {
+        always {
+            // Cleanup actions
+        }
+    }
+}
