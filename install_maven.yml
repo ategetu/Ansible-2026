@@ -1,0 +1,62 @@
+---
+- name: Install Maven on target server
+  hosts: all
+  become: yes
+
+  vars:
+    maven_version: "3.9.8"
+    maven_download_url: "https://downloads.apache.org/maven/maven-3/{{ maven_version }}/binaries/apache-maven-{{ maven_version }}-bin.tar.gz"
+    maven_install_dir: "/opt/maven"
+
+  tasks:
+
+    - name: Install required packages (Java, wget, tar)
+      apt:
+        name:
+          - default-jdk
+          - wget
+          - tar
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages for RedHat (Java, wget, tar)
+      yum:
+        name:
+          - java-11-openjdk
+          - wget
+          - tar
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Create Maven installation directory
+      file:
+        path: "{{ maven_install_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download Maven
+      get_url:
+        url: "{{ maven_download_url }}"
+        dest: "/tmp/apache-maven.tar.gz"
+        mode: '0644'
+
+    - name: Extract Maven
+      unarchive:
+        src: "/tmp/apache-maven.tar.gz"
+        dest: "{{ maven_install_dir }}"
+        remote_src: yes
+        creates: "{{ maven_install_dir }}/apache-maven-{{ maven_version }}"
+
+    - name: Setup Maven environment variables
+      copy:
+        dest: /etc/profile.d/maven.sh
+        mode: '0755'
+        content: |
+          export M2_HOME={{ maven_install_dir }}/apache-maven-{{ maven_version }}
+          export PATH=$M2_HOME/bin:$PATH
+
+    - name: Source Maven environment variables
+      shell: "source /etc/profile.d/maven.sh"
+      args:
+        executable: /bin/bash
+
