@@ -1,62 +1,30 @@
 ---
-- name: Install Maven on target server
-  hosts: localhost
-  become: yes
 
-  vars:
-    maven_version: "3.9.8"
-    maven_download_url: "https://downloads.apache.org/maven/maven-3/{{ maven_version }}/binaries/apache-maven-{{ maven_version }}-bin.tar.gz"
-    maven_install_dir: "/opt/maven"
+- name: Install Maven on Ubuntu
+  hosts: your_ubuntu_vm_ip # Replace with the IP address or hostname of your Ubuntu VM
+  become: yes # Run tasks with root privileges
 
   tasks:
-
-    - name: Install required packages (Java, wget, tar)
+    - name: Update apt package cache
       apt:
-        name:
-          - default-jdk
-          - wget
-          - tar
+        update_cache: yes
+
+    - name: Install OpenJDK (Maven dependency)
+      apt:
+        name: openjdk-11-jdk # Or a different JDK version if preferred
         state: present
-      when: ansible_os_family == "Debian"
 
-    - name: Install required packages for RedHat (Java, wget, tar)
-      yum:
-        name:
-          - java-11-openjdk
-          - wget
-          - tar
+    - name: Install Maven
+      apt:
+        name: maven
         state: present
-      when: ansible_os_family == "RedHat"
 
-    - name: Create Maven installation directory
-      file:
-        path: "{{ maven_install_dir }}"
-        state: directory
-        mode: '0755'
+    - name: Verify Maven installation
+      command: mvn -version
+      register: maven_version_output
+      changed_when: false # This task only verifies, doesn't change anything
 
-    - name: Download Maven
-      get_url:
-        url: "{{ maven_download_url }}"
-        dest: "/tmp/apache-maven.tar.gz"
-        mode: '0644'
-
-    - name: Extract Maven
-      unarchive:
-        src: "/tmp/apache-maven.tar.gz"
-        dest: "{{ maven_install_dir }}"
-        remote_src: yes
-        creates: "{{ maven_install_dir }}/apache-maven-{{ maven_version }}"
-
-    - name: Setup Maven environment variables
-      copy:
-        dest: /etc/profile.d/maven.sh
-        mode: '0755'
-        content: |
-          export M2_HOME={{ maven_install_dir }}/apache-maven-{{ maven_version }}
-          export PATH=$M2_HOME/bin:$PATH
-
-    - name: Source Maven environment variables
-      shell: "source /etc/profile.d/maven.sh"
-      args:
-        executable: /bin/bash
-
+    - name: Print Maven version
+      debug:
+        var: maven_version_output.stdout_lines
+        
