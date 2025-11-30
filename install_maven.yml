@@ -1,6 +1,6 @@
 ---
 - name: Install Maven on target server
-  hosts: all
+  hosts: localhost
   become: yes
 
   vars:
